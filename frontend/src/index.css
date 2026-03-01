@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Custom Properties ─────────────────────────────────── */
+:root {
+  --espresso: #8B4513;
+  --latte:    #D4A853;
+  --cream:    #FFF8F0;
+  --bark:     #2c1a0e;
+  --muted:    #7a6555;
+}
+
+/* ── Base Reset ────────────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-cream-100 text-bark-800 font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar       { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--cream); }
+  ::-webkit-scrollbar-thumb { background: #c09070; border-radius: 3px; }
+}
+
+/* ── Reusable Component Classes ────────────────────────────── */
+@layer components {
+
+  /* Primary CTA button */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-7 py-3
+           bg-espresso-500 text-cream-100 font-body font-medium
+           tracking-wide text-sm uppercase
+           border border-transparent
+           transition-all duration-300
+           hover:bg-espresso-600 hover:shadow-card
+           focus:outline-none focus:ring-2 focus:ring-espresso-400 focus:ring-offset-2
+           active:scale-95;
+  }
+
+  /* Secondary / ghost button */
+  .btn-outline {
+    @apply inline-flex items-center gap-2 px-7 py-3
+           bg-transparent text-espresso-500 font-body font-medium
+           tracking-wide text-sm uppercase
+           border border-espresso-400
+           transition-all duration-300
+           hover:bg-espresso-50 hover:border-espresso-600
+           focus:outline-none focus:ring-2 focus:ring-espresso-400 focus:ring-offset-2
+           active:scale-95;
+  }
+
+  /* Consistent card surface */
+  .card {
+    @apply bg-white border border-cream-300 shadow-card
+           transition-all duration-300
+           hover:shadow-card-lg hover:-translate-y-0.5;
+  }
+
+  /* Form input field */
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border border-cream-300
+           font-body text-bark-800 text-sm
+           placeholder:text-espresso-200
+           focus:outline-none focus:ring-2 focus:ring-espresso-400 focus:border-transparent
+           transition duration-200;
+  }
+
+  /* Form textarea field */
+  .textarea-field {
+    @apply input-field resize-none;
+  }
+
+  /* Section heading pattern */
+  .section-label {
+    @apply font-script text-latte-500 text-2xl;
+  }
+
+  .section-title {
+    @apply font-display text-espresso-700 text-4xl md:text-5xl font-light leading-tight;
+  }
+
+  /* Divider ornament */
+  .ornament {
+    @apply flex items-center gap-3 text-latte-400;
+  }
+  .ornament::before,
+  .ornament::after {
+    content: '';
+    @apply flex-1 h-px bg-cream-300;
+  }
+}
+
+/* ── Staggered animation delays ───────────────────────────── */
+.delay-100  { animation-delay: 100ms; }
+.delay-200  { animation-delay: 200ms; }
+.delay-300  { animation-delay: 300ms; }
+.delay-400  { animation-delay: 400ms; }
+.delay-500  { animation-delay: 500ms; }
+.delay-700  { animation-delay: 700ms; }
+.delay-1000 { animation-delay: 1000ms; }
+
+/* ── Diagonal section divider ─────────────────────────────── */
+.clip-diagonal {
+  clip-path: polygon(0 0, 100% 0, 100% 88%, 0 100%);
+}
+
+/* ── Grain overlay for texture ────────────────────────────── */
+.grain-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
