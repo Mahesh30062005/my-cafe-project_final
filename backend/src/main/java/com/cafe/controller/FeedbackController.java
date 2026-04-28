@@ -2,6 +2,7 @@ package com.cafe.controller;
 
 import com.cafe.dto.FeedbackRequestDto;
 import com.cafe.dto.FeedbackResponseDto;
+import com.cafe.dto.FeedbackSummaryResponse;
 import com.cafe.service.FeedbackService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,5 +41,10 @@ public class FeedbackController {
         log.info("Received feedback submission from: {}", request.getEmail());
         FeedbackResponseDto response = feedbackService.submitFeedback(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<FeedbackSummaryResponse> getSummary() {
+        return ResponseEntity.ok(feedbackService.getSummary());
     }
 }

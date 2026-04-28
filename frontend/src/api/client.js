@@ -84,12 +84,18 @@ export const fetchMenu = () =>
 export const submitFeedback = (data) =>
   apiClient.post('/feedback', data).then((res) => res.data);
 
+export const fetchFeedbackSummary = () =>
+  apiClient.get('/feedback/summary').then((res) => res.data);
+
 // Orders
 export const createOrder = (data) =>
   apiClient.post('/orders', data).then((res) => res.data);
 
 export const fetchCurrentOrders = () =>
   apiClient.get('/orders/current').then((res) => res.data);
+
+export const fetchActiveParcelOrders = () =>
+  apiClient.get('/orders/parcel-active').then((res) => res.data);
 
 export const finishOrder = (orderId) =>
   apiClient.patch(`/orders/${orderId}/finish`).then((res) => res.data);
@@ -113,5 +119,8 @@ export const createEmployee = (data) =>
 
 export const deleteEmployee = (id) =>
   adminClient.delete(`/admin/employees/${id}`).then((res) => res.data);
+
+export const fetchLoyaltyStatus = () =>
+  apiClient.get('/loyalty/me').then((res) => res.data);
 
 export default apiClient;

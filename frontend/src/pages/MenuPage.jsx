@@ -6,6 +6,7 @@
 
 import { useState, useEffect }  from 'react';
 import { useMenu }               from '../hooks/useMenu';
+import { useLoyaltyStatus } from '../hooks/useLoyaltyStatus';
 
 // Human-readable labels and icons for each API category key
 const CATEGORY_META = {
@@ -64,6 +65,7 @@ function ErrorState({ message }) {
 
 export default function MenuPage() {
   const { menu, loading, error } = useMenu();
+  const { status } = useLoyaltyStatus();
   const [activeCategory, setActiveCategory] = useState(null);
 
   // Set the first available category when data loads
@@ -92,6 +94,34 @@ export default function MenuPage() {
           Seasonal ingredients. Honest craft. Made to order.
         </p>
       </div>
+
+      {status && (
+        <div className="bg-cream-100 border-b border-cream-200">
+          <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between text-sm">
+            <div className="font-body text-muted">
+              Member tier: <span className="text-espresso-600">{status.tier}</span>
+              {status.discountPercent > 0 && (
+                <span className="text-espresso-600"> ({status.discountPercent}% off on menu items)</span>
+              )}
+            </div>
+            <div className="font-body text-muted flex flex-col sm:flex-row gap-2 sm:items-center">
+              <span>
+                Orders: {status.totalOrders} | Premium at {status.premiumAt} | Prime at {status.primeAt}
+              </span>
+              {status.dateDiscount?.active && (
+                <span className="text-espresso-600">
+                  {status.dateDiscount.label || 'Date discount'}: {status.dateDiscount.percent}% off
+                </span>
+              )}
+              {status.dessertCombo?.active && (
+                <span>
+                  {status.dessertCombo.description}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Tab bar ───────────────────────────────────────────── */}
       <div className="sticky top-20 z-40 bg-white/95 backdrop-blur border-b border-cream-300 shadow-sm">

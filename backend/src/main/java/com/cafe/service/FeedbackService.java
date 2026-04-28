@@ -2,6 +2,7 @@ package com.cafe.service;
 
 import com.cafe.dto.FeedbackRequestDto;
 import com.cafe.dto.FeedbackResponseDto;
+import com.cafe.dto.FeedbackSummaryResponse;
 import com.cafe.entity.Feedback;
 import com.cafe.repository.FeedbackRepository;
 import lombok.RequiredArgsConstructor;
@@ -78,5 +79,16 @@ public class FeedbackService {
         );
 
         emailService.sendEmail(notifyEmail.trim(), subject, body);
+    }
+
+    @Transactional(readOnly = true)
+    public FeedbackSummaryResponse getSummary() {
+        Double average = feedbackRepository.findAverageRating();
+        long total = feedbackRepository.count();
+
+        return FeedbackSummaryResponse.builder()
+                .averageRating(average == null ? 0.0 : average)
+                .totalRatings(total)
+                .build();
     }
 }

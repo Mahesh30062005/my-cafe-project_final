@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, NavLink, useLocation }        from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useLoyaltyStatus } from '../hooks/useLoyaltyStatus';
 
 const NAV_LINKS = [
   { path: '/',               label: 'Home' },
@@ -21,6 +22,10 @@ export default function Navbar() {
   const [mobileOpen,  setMobileOpen]  = useState(false);
   const location = useLocation();
   const { logout } = useAuth();
+  const { status } = useLoyaltyStatus();
+
+  const tier = status?.tier ?? 'REGULAR';
+  const discountPercent = status?.discountPercent ?? 0;
 
   // Close mobile menu on route change
   useEffect(() => setMobileOpen(false), [location]);
@@ -91,6 +96,11 @@ export default function Navbar() {
 
         {/*  Desktop CTA  */}
         <div className="hidden md:flex items-center gap-3">
+          {tier !== 'REGULAR' && (
+            <div className="px-3 py-1 text-[10px] uppercase tracking-[0.2em] border border-latte-400/40 text-latte-300">
+              {tier === 'PRIME' ? 'Prime Card' : 'Premium Card'} {discountPercent}% off
+            </div>
+          )}
           <Link
             to="/order"
             className="px-5 py-2 text-xs font-body font-medium tracking-widest uppercase
@@ -130,6 +140,11 @@ export default function Navbar() {
                     ${mobileOpen ? 'max-h-72 opacity-100' : 'max-h-0 opacity-0'}`}
       >
         <div className="bg-bark-900 border-t border-espresso-800 px-5 py-6 flex flex-col gap-5">
+          {tier !== 'REGULAR' && (
+            <div className="text-xs uppercase tracking-[0.2em] text-latte-300 border border-latte-400/40 px-3 py-2">
+              {tier === 'PRIME' ? 'Prime Card' : 'Premium Card'} {discountPercent}% off
+            </div>
+          )}
           {NAV_LINKS.map(({ path, label }) => (
             <NavLink
               key={path}

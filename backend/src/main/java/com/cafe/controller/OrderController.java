@@ -28,6 +28,11 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getCurrentOrders());
     }
 
+    @GetMapping("/parcel-active")
+    public ResponseEntity<List<OrderResponse>> getActiveParcelOrders() {
+        return ResponseEntity.ok(orderService.getActiveParcelOrders());
+    }
+
     @PatchMapping("/{orderId}/finish")
     public ResponseEntity<OrderResponse> finishOrder(@PathVariable Long orderId) {
         return ResponseEntity.ok(orderService.finishOrder(orderId));

@@ -8,12 +8,22 @@ export default function CurrentOrdersPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const formatInr = (value) => {
+    if (value === null || value === undefined) return '0';
+    return (Number(value) * USD_TO_INR).toFixed(0);
+  };
+
   useEffect(() => {
     let active = true;
     setLoading(true);
     fetchCurrentOrders()
       .then((data) => {
-        if (active) setOrders(data);
+        if (active) {
+          const sorted = [...data].sort((a, b) => (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          ));
+          setOrders(sorted);
+        }
       })
       .catch((err) => {
         if (active) setError(err.message || 'Unable to load orders');
@@ -47,13 +57,63 @@ export default function CurrentOrdersPage() {
             <div key={order.id} className="bg-white border border-cream-200 p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-muted">Table</p>
-                  <p className="font-display text-espresso-700 text-2xl">#{order.tableNumber}</p>
+                  <p className="text-xs uppercase tracking-widest text-muted">Order</p>
+                  <p className="font-display text-espresso-700 text-2xl">
+                    #{order.orderNumber || order.id}
+                  </p>
+                  {(order.orderType || 'DINE_IN') === 'DINE_IN' && (
+                    <p className="text-xs uppercase tracking-widest text-muted mt-1">
+                      Table #{order.tableNumber}
+                    </p>
+                  )}
                 </div>
-                <span className="text-xs uppercase tracking-widest text-muted">
-                  {new Date(order.createdAt).toLocaleTimeString()}
-                </span>
+                <div className="text-right">
+                  <span className="text-xs uppercase tracking-widest text-muted block">
+                    {new Date(order.createdAt).toLocaleTimeString()}
+                  </span>
+                  <span className="text-xs uppercase tracking-widest text-espresso-600 block mt-1">
+                    {(order.orderType || 'DINE_IN') === 'DELIVERY' && '🛵 DELIVERY'}
+                    {(order.orderType || 'DINE_IN') === 'TAKEAWAY' && '📦 PARCEL'}
+                    {(order.orderType || 'DINE_IN') === 'DINE_IN' && '🍽️ DINE-IN'}
+                  </span>
+                  {order.pricing && order.pricing.total !== null && order.pricing.total !== undefined && (
+                    <span className="text-xs uppercase tracking-widest text-espresso-600 block mt-1">
+                      Total Rs. {formatInr(order.pricing.total)}
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {(order.orderType || 'DINE_IN') === 'DELIVERY' && (
+                <div className="mb-3 text-sm text-muted">
+                  {order.deliveryAddress && (
+                    <p><span className="text-espresso-700">Address:</span> {order.deliveryAddress}</p>
+                  )}
+                  {order.pickupOrDeliveryTime && (
+                    <p>
+                      <span className="text-espresso-700">Delivery Time:</span>{' '}
+                      {new Date(order.pickupOrDeliveryTime).toLocaleString()}
+                    </p>
+                  )}
+                  {order.customerContactNumber && (
+                    <p><span className="text-espresso-700">Contact:</span> {order.customerContactNumber}</p>
+                  )}
+                </div>
+              )}
+
+              {(order.orderType || 'DINE_IN') === 'TAKEAWAY' && (
+                <div className="mb-3 text-sm text-muted">
+                  {order.pickupOrDeliveryTime && (
+                    <p>
+                      <span className="text-espresso-700">Pickup Time:</span>{' '}
+                      {new Date(order.pickupOrDeliveryTime).toLocaleString()}
+                    </p>
+                  )}
+                  {order.customerContactNumber && (
+                    <p><span className="text-espresso-700">Contact:</span> {order.customerContactNumber}</p>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 {order.items.map((item) => {

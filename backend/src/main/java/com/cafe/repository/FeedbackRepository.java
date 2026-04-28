@@ -1,6 +1,7 @@
 package com.cafe.repository;
 
 import com.cafe.entity.Feedback;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +12,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
-    // Example of a derived query (available for future use):
-    // List<Feedback> findByRatingGreaterThanEqual(int minimumRating);
+    @Query("select avg(f.rating) from Feedback f")
+    Double findAverageRating();
 }

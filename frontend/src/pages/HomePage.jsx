@@ -4,6 +4,7 @@
  */
 
 import { Link } from 'react-router-dom';
+import { useCafeRating } from '../hooks/useCafeRating';
 
 // Hand-picked featured items for the daily specials section
 const USD_TO_INR = 83;
@@ -40,6 +41,11 @@ const SPECIALS = [
 ];
 
 export default function HomePage() {
+  const { summary } = useCafeRating();
+  const averageRating = summary?.averageRating ?? 0;
+  const totalRatings = summary?.totalRatings ?? 0;
+  const hasRatings = totalRatings > 0;
+
   return (
     <>
       {/* ════════════════════════════════
@@ -91,6 +97,17 @@ export default function HomePage() {
             Handcrafted coffee. Fresh-baked pastries.
             A corner of the city that slows down.
           </p>
+
+          {/* Rating badge */}
+          <div className="inline-flex items-center gap-3 px-4 py-2 border border-cream-200/30 text-cream-200/80 text-xs uppercase tracking-widest mb-8 animate-fade-up opacity-0 delay-500">
+            <span className="font-body">Cafe Rating</span>
+            <span className="text-latte-300">
+              {hasRatings ? `${averageRating.toFixed(1)} / 5` : 'New'}
+            </span>
+            <span className="text-cream-200/60">
+              {hasRatings ? `(${totalRatings} reviews)` : '(Be the first to review)'}
+            </span>
+          </div>
 
           {/* CTAs */}
           <div

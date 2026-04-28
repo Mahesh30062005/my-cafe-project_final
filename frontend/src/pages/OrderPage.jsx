@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMenu } from '../hooks/useMenu';
 import { createOrder } from '../api/client';
+import { useLoyaltyStatus } from '../hooks/useLoyaltyStatus';
 
 const COURSE_OPTIONS = [
   { key: 'STARTER', label: 'Starter' },
@@ -9,6 +10,7 @@ const COURSE_OPTIONS = [
 ];
 
 const USD_TO_INR = 83;
+const PACKAGING_FEE_INR = 20;
 const COURSE_CATEGORY_MAP = {
   STARTER: ['STARTERS'],
   MAIN: ['MAINS'],
@@ -23,12 +25,18 @@ const NEXT_COURSE = {
 
 export default function OrderPage() {
   const { menu, loading, error } = useMenu();
+  const { status } = useLoyaltyStatus();
   const [tableNumber, setTableNumber] = useState('');
+  const [orderType, setOrderType] = useState('DINE_IN');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [customerContactNumber, setCustomerContactNumber] = useState('');
+  const [pickupOrDeliveryTime, setPickupOrDeliveryTime] = useState('');
   const [course, setCourse] = useState('STARTER');
   const [quantities, setQuantities] = useState({});
   const [message, setMessage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [lastCourse, setLastCourse] = useState(null);
+  const [lastOrder, setLastOrder] = useState(null);
 
   const itemsForCourse = useMemo(() => {
     if (!menu) return [];
@@ -36,6 +44,16 @@ export default function OrderPage() {
     const items = categories.flatMap((cat) => menu[cat] ?? []);
     return items;
   }, [menu, course]);
+
+  useEffect(() => {
+    if (orderType !== 'DINE_IN') {
+      setTableNumber('');
+    } else {
+      setDeliveryAddress('');
+      setCustomerContactNumber('');
+      setPickupOrDeliveryTime('');
+    }
+  }, [orderType]);
 
   const handleQuantityChange = (id, value) => {
     setQuantities((prev) => ({ ...prev, [id]: value }));
@@ -48,9 +66,20 @@ export default function OrderPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setMessage(null);
+    setLastOrder(null);
 
-    if (!tableNumber) {
+    if (orderType === 'DINE_IN' && !tableNumber) {
       setMessage('Please enter your table number.');
+      return;
+    }
+
+    if ((orderType === 'TAKEAWAY' || orderType === 'DELIVERY') && !customerContactNumber.trim()) {
+      setMessage('Please enter a contact number for takeaway or delivery.');
+      return;
+    }
+
+    if (orderType === 'DELIVERY' && !deliveryAddress.trim()) {
+      setMessage('Please enter a delivery address.');
       return;
     }
 
@@ -69,11 +98,17 @@ export default function OrderPage() {
 
     setSubmitting(true);
     try {
-      await createOrder({
-        tableNumber: Number(tableNumber),
+      const created = await createOrder({
+        tableNumber: orderType === 'DINE_IN' ? Number(tableNumber) : null,
+        orderType,
+        deliveryAddress: orderType === 'DELIVERY' ? deliveryAddress.trim() : null,
+        customerContactNumber: orderType === 'DINE_IN' ? null : customerContactNumber.trim(),
+        pickupOrDeliveryTime: pickupOrDeliveryTime ? pickupOrDeliveryTime : null,
         items,
       });
-      setMessage('Order placed. Would you like to continue to the next course?');
+      setLastOrder(created);
+      window.dispatchEvent(new Event('loyalty:refresh'));
+      setMessage(`Order ${created.orderNumber} placed. Would you like to continue to the next course?`);
       setLastCourse(course);
       resetSelection();
     } catch (err) {
@@ -96,6 +131,11 @@ export default function OrderPage() {
     setLastCourse('DESSERT');
   };
 
+  const formatInr = (value) => {
+    if (value === null || value === undefined) return '0';
+    return (Number(value) * USD_TO_INR).toFixed(0);
+  };
+
   return (
     <section className="bg-cream-100 min-h-screen">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 lg:px-12 py-12">
@@ -108,17 +148,91 @@ export default function OrderPage() {
 
         <div className="grid lg:grid-cols-[1fr,1.2fr] gap-8">
           <div className="bg-white border border-cream-200 p-6 shadow-sm">
-            <h2 className="font-display text-espresso-700 text-2xl font-light mb-4">Table & Course</h2>
+            <h2 className="font-display text-espresso-700 text-2xl font-light mb-4">Order Details</h2>
 
-            <label className="block text-xs uppercase tracking-widest text-muted mb-1">Table Number</label>
-            <input
-              type="number"
-              min="1"
-              value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
-              className="w-full border border-cream-300 px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-espresso-300"
-              placeholder="e.g. 12"
-            />
+            <div className="mb-5">
+              <p className="text-xs uppercase tracking-widest text-muted mb-2">Order Type</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: 'DINE_IN', label: 'Dine-in' },
+                  { key: 'TAKEAWAY', label: 'Takeaway' },
+                  { key: 'DELIVERY', label: 'Delivery' },
+                ].map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setOrderType(opt.key)}
+                    className={`px-4 py-2 text-xs uppercase tracking-widest border transition-colors
+                      ${orderType === opt.key
+                        ? 'bg-espresso-600 text-cream-100 border-espresso-600'
+                        : 'border-cream-300 text-muted hover:border-espresso-400 hover:text-espresso-600'
+                      }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {orderType === 'DINE_IN' && (
+              <>
+                <label className="block text-xs uppercase tracking-widest text-muted mb-1">Table Number</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={tableNumber}
+                  onChange={(e) => setTableNumber(e.target.value)}
+                  className="w-full border border-cream-300 px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-espresso-300"
+                  placeholder="e.g. 12"
+                />
+              </>
+            )}
+
+            {orderType !== 'DINE_IN' && (
+              <>
+                <label className="block text-xs uppercase tracking-widest text-muted mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={customerContactNumber}
+                  onChange={(e) => setCustomerContactNumber(e.target.value)}
+                  className="w-full border border-cream-300 px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-espresso-300"
+                  placeholder="+91 90000 00000"
+                />
+              </>
+            )}
+
+            {orderType === 'DELIVERY' && (
+              <>
+                <label className="block text-xs uppercase tracking-widest text-muted mb-1">Delivery Address</label>
+                <textarea
+                  rows={3}
+                  value={deliveryAddress}
+                  onChange={(e) => setDeliveryAddress(e.target.value)}
+                  className="w-full border border-cream-300 px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-espresso-300"
+                  placeholder="House no, street, landmark, city"
+                />
+              </>
+            )}
+
+            {orderType !== 'DINE_IN' && (
+              <>
+                <label className="block text-xs uppercase tracking-widest text-muted mb-1">
+                  {orderType === 'DELIVERY' ? 'Delivery Time' : 'Pickup Time'}
+                </label>
+                <input
+                  type="datetime-local"
+                  value={pickupOrDeliveryTime}
+                  onChange={(e) => setPickupOrDeliveryTime(e.target.value)}
+                  className="w-full border border-cream-300 px-3 py-2 mb-5 focus:outline-none focus:ring-2 focus:ring-espresso-300"
+                />
+              </>
+            )}
+
+            {orderType !== 'DINE_IN' && (
+              <p className="text-xs text-muted mb-4">
+                Packaging fee applies to takeaway and delivery orders: Rs. {PACKAGING_FEE_INR}
+              </p>
+            )}
 
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-widest text-muted">Choose course</p>
@@ -176,6 +290,59 @@ export default function OrderPage() {
               >
                 Go to {NEXT_COURSE[lastCourse].toLowerCase()} course
               </button>
+            )}
+
+            {status && (
+              <div className="mt-6 p-4 bg-cream-50 border border-cream-200 text-sm">
+                <p className="font-body text-muted">
+                  Member tier: <span className="text-espresso-600">{status.tier}</span>
+                  {status.discountPercent > 0 && (
+                    <span className="text-espresso-600"> ({status.discountPercent}% off)</span>
+                  )}
+                </p>
+                <p className="font-body text-muted mt-2">
+                  Orders: {status.totalOrders} | Premium at {status.premiumAt} | Prime at {status.primeAt}
+                </p>
+                {status.dateDiscount?.active && (
+                  <p className="font-body text-muted mt-2">
+                    {status.dateDiscount.label || 'Date discount'}: {status.dateDiscount.percent}% off
+                  </p>
+                )}
+                {status.dessertCombo?.active && (
+                  <p className="font-body text-muted mt-2">
+                    {status.dessertCombo.description}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {lastOrder?.pricing && (
+              <div className="mt-6 p-4 bg-white border border-cream-200 text-sm">
+                <h3 className="font-display text-espresso-700 text-xl font-light mb-3">Order Summary</h3>
+                <p className="text-xs uppercase tracking-widest text-muted mb-3">
+                  Order #{lastOrder.orderNumber} • {lastOrder.orderType?.replace('_', ' ')}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted">Subtotal</span>
+                  <span>Rs. {formatInr(lastOrder.pricing.subtotal)}</span>
+                </div>
+                {lastOrder.pricing.appliedDiscounts?.map((discount) => (
+                  <div key={discount.code} className="flex items-center justify-between text-espresso-600 mt-1">
+                    <span>{discount.description}</span>
+                    <span>- Rs. {formatInr(discount.amount)}</span>
+                  </div>
+                ))}
+                {Number(lastOrder.pricing.packagingFee) > 0 && (
+                  <div className="flex items-center justify-between text-espresso-600 mt-1">
+                    <span>Packaging fee</span>
+                    <span>Rs. {formatInr(lastOrder.pricing.packagingFee)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between font-body mt-3 text-espresso-700">
+                  <span>Total</span>
+                  <span>Rs. {formatInr(lastOrder.pricing.total)}</span>
+                </div>
+              </div>
             )}
           </div>
 
