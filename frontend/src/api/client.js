@@ -6,7 +6,7 @@
 import axios from 'axios';
 import { getAuthToken } from '../context/AuthContext.jsx';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+const BASE_URL ="https://my-cafe-project-6zrt.onrender.com/api";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
