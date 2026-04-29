@@ -27,27 +27,17 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      {isAuthenticated && <Navbar />}
+      {/* Show Navbar even if not logged in so users can see the "Menu" link */}
+      <Navbar /> 
 
-      <main className={isAuthenticated ? 'min-h-screen pt-20' : 'min-h-screen'}>
+      <main className='min-h-screen pt-20'>
         <Routes>
           <Route path="/admin" element={<AdminPage />} />
-          <Route
-            path="/"
-            element={(
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/menu"
-            element={(
-              <ProtectedRoute>
-                <MenuPage />
-              </ProtectedRoute>
-            )}
-          />
+          
+          {/* MOVE MENU OUT OF PROTECTED ROUTE */}
+          <Route path="/menu" element={<MenuPage />} />
+          <Route path="/" element={<Navigate to="/menu" replace />} />
+
           <Route
             path="/feedback"
             element={(
