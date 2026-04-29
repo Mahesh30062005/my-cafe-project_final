@@ -16,9 +16,10 @@ import CurrentOrdersPage from './pages/CurrentOrdersPage';
 import AdminPage from './pages/AdminPage';
 import { useAuth } from './context/AuthContext.jsx';
 
+// Updated: Redirects to /login instead of showing the AuthPage inside the route
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <AuthPage />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return children;
 }
 
@@ -27,17 +28,20 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      {/* Show Navbar even if not logged in so users can see the "Menu" link */}
+      {/* Navbar is now always visible */}
       <Navbar /> 
 
       <main className='min-h-screen pt-20'>
         <Routes>
+          {/* 1. Admin & Public Routes */}
           <Route path="/admin" element={<AdminPage />} />
-          
-          {/* MOVE MENU OUT OF PROTECTED ROUTE */}
           <Route path="/menu" element={<MenuPage />} />
+          <Route path="/login" element={<AuthPage />} />
+          
+          {/* 2. Default landing page: Auto-redirect to Menu */}
           <Route path="/" element={<Navigate to="/menu" replace />} />
 
+          {/* 3. Protected Routes (Login required) */}
           <Route
             path="/feedback"
             element={(
@@ -62,11 +66,13 @@ export default function App() {
               </ProtectedRoute>
             )}
           />
-          <Route path="/login" element={<Navigate to="/" replace />} />
+          
+          {/* 4. Catch-all 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
 
+      {/* Footer shows once they are in the app */}
       {isAuthenticated && <Footer />}
     </BrowserRouter>
   );
